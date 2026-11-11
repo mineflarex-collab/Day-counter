@@ -7,7 +7,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: unzip survival-day-counter.zip
+      - name: Unzip and find project
+        run: |
+          unzip -o survival-day-counter.zip -d app
+          DIR=$(dirname "$(find app -maxdepth 3 -name 'build.gradle*' | head -1)")
+          echo "Project dir: $DIR"
+          echo "PROJECT_DIR=$DIR" >> $GITHUB_ENV
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -16,8 +21,8 @@ jobs:
         with:
           gradle-version: current
       - run: gradle build --stacktrace
-        working-directory: survival-day-counter
+        working-directory: ${{ env.PROJECT_DIR }}
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}
-          files: survival-day-counter/build/libs/survival-day-counter-1.0.0.jar
+          files: ${{ env.PROJECT_DIR }}/build/libs/*.jar
