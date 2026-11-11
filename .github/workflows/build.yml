@@ -9,8 +9,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Unzip and find project
         run: |
+          rm -rf app
           unzip -o survival-day-counter.zip -d app
-          DIR=$(dirname "$(find app -maxdepth 3 -name 'build.gradle*' | head -1)")
+          GRADLE_FILE=$(find app -maxdepth 3 -name 'build.gradle*' | head -1)
+          if [ -z "$GRADLE_FILE" ]; then echo "build.gradle not found in zip"; find app; exit 1; fi
+          DIR=$(dirname "$GRADLE_FILE")
           echo "Project dir: $DIR"
           echo "PROJECT_DIR=$DIR" >> $GITHUB_ENV
       - uses: actions/setup-java@v4
@@ -19,10 +22,10 @@ jobs:
           java-version: 21
       - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: current
-      - run: gradle build --stacktrace
+          gradle-version: 8.10.2
+      - run: gradle build
         working-directory: ${{ env.PROJECT_DIR }}
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}
-          files: ${{ env.PROJECT_DIR }}/build/libs/*.jar
+          files: ${{ env.PROJECT_DIR }}/build/libs/survival-day-counter-1.0.0.jar
